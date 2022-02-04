@@ -13,7 +13,6 @@
 
 import serial
 from matplotlib import pyplot as pp
-import time
 
 # initialize data arrays to plot
 timeList = []
@@ -39,7 +38,7 @@ with serial.Serial ('COM3', 115200, timeout = 1) as s_port:
         pass
         
     # infinite loop 
-    while True:
+    while s_port.inWaiting() > 0:
         try:
             line = s_port.readline().strip(b'\r\n').split(b' ')
             timeList.append(float(line[0].decode()))
@@ -48,10 +47,9 @@ with serial.Serial ('COM3', 115200, timeout = 1) as s_port:
             # print to track progress and trace errors
             print(line)
             
-        # stops data collection when readline takes in the
-        # line that prompts for an period input
+        # skips values that will not cast to a float
         except ValueError:
-            break
+            pass
 
 print("Data Collection Complete")
 
