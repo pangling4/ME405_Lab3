@@ -1231,7 +1231,7 @@ GENERATE_HTML          = YES
 # The default directory is: html.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_OUTPUT            = "C:\Users\jaint\Desktop\Cal Poly 2017-2022\Winter 2022\ME 405\Lab\ME405_Lab2\docs"
+HTML_OUTPUT            = "C:\Users\jaint\Desktop\Cal Poly 2017-2022\Winter 2022\ME 405\Lab\ME405_Lab3\docs"
 
 # The HTML_FILE_EXTENSION tag can be used to specify the file extension for each
 # generated HTML page (for example: .htm, .php, .asp).
