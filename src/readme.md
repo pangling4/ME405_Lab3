@@ -50,7 +50,7 @@ just like the Queues class.
 ## Multitask Implementation Results 
 Our results here were using the flywheel within our multitasking regime. This
 shows the effect of different user defined periods for the 
-motor controller on the step response. Here. 
+motor controller on the step response. This is a test, are images working. 
 ![Flywheel Step Response!](Per_10.PNG "Period:10")
 
 *Figure 1: Step response with a controller period of 10 ms.*
