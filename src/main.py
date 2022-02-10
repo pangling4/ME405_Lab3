@@ -42,14 +42,15 @@ def task1_Motor ():
         elif state == S1_RUNNING:
             Slo_Moe.set_duty_cycle(share_duty_1.get())
             
-            if share_time.get() > 2000:
+            if share_Stop.get() == 1:
                 state = S2_STOPPED
                 
         elif state == S2_STOPPED:
             Slo_Moe.set_duty_cycle(0)
             Slo_Moe.disable()
+            print("IN STOP STATE")
         
-            if share_time.get() < 2000:
+            if not share_Stop.get():
                 state = S0_INIT
                 
         yield (state)
@@ -77,18 +78,18 @@ def task2_Encoder ():
             share_pos_1.put(Slo_Enco.read())
             
             if not(queue_enc1Times.full()):
-                queue_enc1Times.put(share_time.get())
+                queue_enc1Times.put(utime.ticks_diff(utime.ticks_ms(), share_Start.get()))
             
             if not(queue_pos_1.full()):
                 queue_pos_1.put(Slo_Enco.read())
             
-            if share_time.get() > 2000:
+            if share_Stop.get():
                 state = S2_STOPPED
                 
         elif state == S2_STOPPED:
             Slo_Enco.zero()
         
-            if share_time.get() < 2000:
+            if not(share_Stop.get()):
                 state = S0_INIT
                 
         yield (state)
@@ -112,13 +113,13 @@ def task3_Controller ():
         elif state == S1_RUNNING:
             share_duty_1.put(int(Slo_Control.update(share_pos_1.get())))
             
-            if share_time.get() > 2000:
+            if share_Stop.get():
                 state = S2_STOPPED
                 
         elif state == S2_STOPPED:
             Slo_Control.change_kp(0)
         
-            if share_time.get() < 2000:
+            if not share_Stop.get():
                 state = S0_INIT
                 
         yield (state)
@@ -190,15 +191,16 @@ if __name__ == "__main__":
             share_duty_1 = task_share.Share ('i', thread_protect = False, name = "share_duty_1")
             share_setpoint_1 = task_share.Share ('f', thread_protect = False, name = "share_setpoint_1")
             share_pos_1 = task_share.Share ('f', thread_protect = False, name = "share_pos_1")
-            queue_pos_1 = task_share.Queue('f', 200, thread_protect = False, name = "queue_pos_1")
-            queue_enc1Times = task_share.Queue('f', 200, thread_protect = False, name = "queue_enc1Times")
-            share_time = task_share.Share('i', thread_protect = False, name = "share_time")
+            queue_pos_1 = task_share.Queue('f', 500, thread_protect = False, name = "queue_pos_1")
+            queue_enc1Times = task_share.Queue('f', 500, thread_protect = False, name = "queue_enc1Times")
+            share_Start = task_share.Share('i', thread_protect = False, name = "share_Start")
+            share_Stop = task_share.Share('i', thread_protect = False, name = "share_Stop")
             
             # Create a shares for second motor duty cycle, controller setpoint, and encoder position
-            share_duty_2 = task_share.Share ('i', thread_protect = False, name = "share_duty_2")
-            share_setpoint_2 = task_share.Share ('f', thread_protect = False, name = "share_setpoint_2")
-            share_pos_2 = task_share.Share ('f', thread_protect = False, name = "share_pos_2")
-            queue_pos_2 = task_share.Queue('f', 200, thread_protect = False, name = "queue_pos_2")
+#             share_duty_2 = task_share.Share ('i', thread_protect = False, name = "share_duty_2")
+#             share_setpoint_2 = task_share.Share ('f', thread_protect = False, name = "share_setpoint_2")
+#             share_pos_2 = task_share.Share ('f', thread_protect = False, name = "share_pos_2")
+#             queue_pos_2 = task_share.Queue('f', 200, thread_protect = False, name = "queue_pos_2")
             
             Contperiod = int(input("Set Controller Period: "))
             
@@ -207,10 +209,11 @@ if __name__ == "__main__":
             share_duty_1.put(0)
             share_setpoint_1.put(math.pi*2)
             share_pos_1.put(0)
-            share_duty_2.put(0)
-            share_setpoint_2.put(math.pi*2)
-            share_pos_2.put(0)
+#             share_duty_2.put(0)
+#             share_setpoint_2.put(math.pi*2)
+#             share_pos_2.put(0)
             
+            share_Stop.put(0)
 
             # Create the tasks. If trace is enabled for any task, memory will be
             # allocated for state transition tracing, and the application will run out
@@ -219,19 +222,19 @@ if __name__ == "__main__":
             
             # First set of tasks
             task1_Mot = cotask.Task (task1_Motor, name = 'Task1_Motor', priority = 1, 
-                                 period = 10, profile = True, trace = False)
+                                 period = 10, profile = True, trace = True)
             task2_Enco = cotask.Task (task2_Encoder, name = 'Task2_Encoder', priority = 3, 
-                                 period = 10, profile = True, trace = False)
+                                 period = 10, profile = True, trace = True)
             task3_Cont = cotask.Task (task3_Controller, name = 'Task3_Controller', priority = 2, 
-                                 period = Contperiod, profile = True, trace = False)
+                                 period = Contperiod, profile = True, trace = True)
             
             # Second set of tasks
-            task4_Mot2 = cotask.Task (task4_Motor2, name = 'Task4_Motor2', priority = 1, 
-                                 period = 10, profile = True, trace = False)
-            task5_Enco2 = cotask.Task (task5_Encoder2, name = 'Task5_Encoder2', priority = 3, 
-                                 period = 10, profile = True, trace = False)
-            task6_Cont2 = cotask.Task (task6_Controller2, name = 'Task6_Controller2', priority = 2, 
-                                 period = Contperiod, profile = True, trace = False)
+#             task4_Mot2 = cotask.Task (task4_Motor2, name = 'Task4_Motor2', priority = 1, 
+#                                  period = 10, profile = True, trace = False)
+#             task5_Enco2 = cotask.Task (task5_Encoder2, name = 'Task5_Encoder2', priority = 3, 
+#                                  period = 10, profile = True, trace = False)
+#             task6_Cont2 = cotask.Task (task6_Controller2, name = 'Task6_Controller2', priority = 2, 
+#                                  period = Contperiod, profile = True, trace = False)
             
             cotask.task_list.append (task1_Mot)
             cotask.task_list.append (task2_Enco)
@@ -246,17 +249,32 @@ if __name__ == "__main__":
             gc.collect ()
 
             # Start a timer to time step response
-            start = utime.ticks_ms()
+            share_Start.put(utime.ticks_ms())
             
             # Run the scheduler with the chosen scheduling algorithm. Quit if any 
             # character is received through the serial port
             while True:
-                share_time.put(utime.ticks_diff(utime.ticks_ms(), start))
-                
-                if share_time.get() >= 2000:
+                cotask.task_list.pri_sched ()                
+                if utime.ticks_diff(utime.ticks_ms(), share_Start.get()) >= 2000:
+                    share_Stop.put(1)
                     break
-                cotask.task_list.pri_sched ()
-
+            
+            utime.sleep_ms(15)
+            
+            task1_Mot.schedule()
+            task2_Enco.schedule()
+            task3_Cont.schedule()
+            
+            utime.sleep_ms(15)
+            
+            task1_Mot.schedule()
+            task2_Enco.schedule()
+            task3_Cont.schedule()
+            
+#             print("task1_Mot" + task1_Mot.get_trace())
+#             print("task2_Enco" + task2_Enco.get_trace())
+#             print("task3_Cont" + task3_Cont.get_trace())
+#             
             # Empty the comm port buffer of the character(s) just pressed
         #     if vcp.any():
         #         vcp.read ()

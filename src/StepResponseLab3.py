@@ -31,14 +31,17 @@ with serial.Serial ('COM3', 115200, timeout = 1) as s_port:
     # s_port.write(motor, b'\r')
     
     # need to read first line in advance because that's where the kp input is
-    s_port.readline()
+    print(s_port.readline())
+    
     
     # Wait for step response to complete
     while s_port.inWaiting() == 0:
         pass
-        
+    
+    print(s_port.readline())
+    
     # infinite loop 
-    while s_port.inWaiting() > 0:
+    while True:
         try:
             line = s_port.readline().strip(b'\r\n').split(b' ')
             timeList.append(float(line[0].decode()))
@@ -49,7 +52,7 @@ with serial.Serial ('COM3', 115200, timeout = 1) as s_port:
             
         # skips values that will not cast to a float
         except ValueError:
-            pass
+            break
 
 print("Data Collection Complete")
 
@@ -60,7 +63,7 @@ plt.set(xlabel = "Time [ms]", ylabel = "Position [rad]")
 plt.set(title = "Flywheel Position, Controller Period="+ str(period.decode()))
 
 # set y limits of plot in radians
-plt.set_ylim(0,7)
+plt.set_ylim(0,9)
 
 # display plot
 pp.show()
