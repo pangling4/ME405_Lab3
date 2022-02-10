@@ -47,11 +47,11 @@ many items are in the queue. The Share class is more conditioned for an item
 by item basis rather than a byte array. It also has the put() and get() methods
 just like the Queues class. 
 
-## Multitask Implementation Results
+## Multitask Implementation Results 
 Our results here were using the flywheel within our multitasking regime. This
 shows the effect of different user defined periods for the 
-motor controller on the step response.
-![Flywheel Step Response!](Per_10.png "Period:10")
+motor controller on the step response. Here. 
+![Flywheel Step Response!](Per_10.PNG "Period:10")
 
 *Figure 1: Step response with a controller period of 10 ms.*
 
