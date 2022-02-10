@@ -26,7 +26,7 @@ var NAVTREE =
 [
   [ "ME 405: Lab 3", "index.html", [
     [ "Multitasking: On Schedule", "index.html", [
-      [ "Multitask Implementation Results", "index.html#autotoc_md3", null ],
+      [ "Multitask Implementation Results TEST", "index.html#autotoc_md3", null ],
       [ "Adding a second motor", "index.html#autotoc_md4", null ]
     ] ],
     [ "Namespaces", "namespaces.html", [
