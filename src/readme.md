@@ -51,6 +51,7 @@ just like the Queues class.
 Our results here were using the flywheel within our multitasking regime. This
 shows the effect of different user defined periods for the 
 motor controller on the step response. This is a test, are images working. 
+added jpeg
 ![Flywheel Step Response!](Per_10.jpeg "Period:10")
 
 *Figure 1: Step response with a controller period of 10 ms.*
