@@ -43,7 +43,7 @@ def task2_Encoder ():
     
     Slo_Enco.zero()
     
-    counter = 0
+    encoderStart = utime.ticks_ms()
     
     while True:
         
@@ -53,16 +53,18 @@ def task2_Encoder ():
         if not(queue_pos_1.full()):
             queue_pos_1.put(Slo_Enco.read())
         #print('Encoder Position: ', share_pos_1.get())
-
-        yield (counter)
-        counter += 1
+        
+        if not(queue_enc1Times.full()):
+            queue_enc1Times.put(utime.ticks_diff(utime.ticks_ms(), encoderStart))
+                             
+        yield (0)
 
 def task3_Controller ():
     """!
     Task which runs the closed loop controller.
     """
     
-    Slo_Control = ClosedLoop.ClosedLoop(100, math.pi*2)
+    Slo_Control = ClosedLoop.ClosedLoop(50, math.pi*2)
     
     while True:
         
@@ -133,101 +135,110 @@ def task6_Controller2 ():
 # printouts show diagnostic information about the tasks, share, and queue.
 if __name__ == "__main__":
     #print ('Multitasking')
-
-    # Create a shares for motor duty cycle, controller setpoint, and encoder position
-    share_duty_1 = task_share.Share ('i', thread_protect = False, name = "share_duty_1")
-    share_setpoint_1 = task_share.Share ('f', thread_protect = False, name = "share_setpoint_1")
-    share_pos_1 = task_share.Share ('f', thread_protect = False, name = "share_pos_1")
-    queue_pos_1 = task_share.Queue('f', 200, thread_protect = False, name = "queue_pos_1")
     
-    # Create a shares for second motor duty cycle, controller setpoint, and encoder position
-    share_duty_2 = task_share.Share ('i', thread_protect = False, name = "share_duty_2")
-    share_setpoint_2 = task_share.Share ('f', thread_protect = False, name = "share_setpoint_2")
-    share_pos_2 = task_share.Share ('f', thread_protect = False, name = "share_pos_2")
-    queue_pos_2 = task_share.Queue('f', 200, thread_protect = False, name = "queue_pos_2")
-    
-    Contperiod = int(input("Set Controller Period: "))
-    
-    
-    # Initialize shared variables
-    share_duty_1.put(0)
-    share_setpoint_1.put(math.pi*2)
-    share_pos_1.put(0)
-    share_duty_2.put(0)
-    share_setpoint_2.put(math.pi*2)
-    share_pos_2.put(0)
-    
-
-    # Create the tasks. If trace is enabled for any task, memory will be
-    # allocated for state transition tracing, and the application will run out
-    # of memory after a while and quit. Therefore, use tracing only for 
-    # debugging and set trace to False when it's not needed
-    
-    # First set of tasks
-    task1_Mot = cotask.Task (task1_Motor, name = 'Task1_Motor', priority = 1, 
-                         period = 10, profile = True, trace = False)
-    task2_Enco = cotask.Task (task2_Encoder, name = 'Task2_Encoder', priority = 3, 
-                         period = 10, profile = True, trace = True)
-    task3_Cont = cotask.Task (task3_Controller, name = 'Task3_Controller', priority = 2, 
-                         period = Contperiod, profile = True, trace = False)
-    
-    # Second set of tasks
-    task4_Mot2 = cotask.Task (task4_Motor2, name = 'Task4_Motor2', priority = 1, 
-                         period = 10, profile = True, trace = False)
-    task5_Enco2 = cotask.Task (task5_Encoder2, name = 'Task5_Encoder2', priority = 3, 
-                         period = 10, profile = True, trace = True)
-    task6_Cont2 = cotask.Task (task6_Controller2, name = 'Task3_Controller2', priority = 2, 
-                         period = Contperiod, profile = True, trace = False)
-    
-    cotask.task_list.append (task1_Mot)
-    cotask.task_list.append (task2_Enco)
-    cotask.task_list.append (task3_Cont)
-    cotask.task_list.append (task4_Mot2)
-    cotask.task_list.append (task5_Enco2)
-    cotask.task_list.append (task6_Cont2)
-    
-
-    # Run the memory garbage collector to ensure memory is as defragmented as
-    # possible before the real-time scheduler is started
-    gc.collect ()
-
-    # Start a timer to time step response
-    start = utime.ticks_ms()
-    
-    # Run the scheduler with the chosen scheduling algorithm. Quit if any 
-    # character is received through the serial port
+    runs = 1
     while True:
-        if utime.ticks_diff(utime.ticks_ms(), start) >= 2000:
-            break
-        cotask.task_list.pri_sched ()
+        try:
+            
+            # Create a shares for motor duty cycle, controller setpoint, and encoder position
+            share_duty_1 = task_share.Share ('i', thread_protect = False, name = "share_duty_1")
+            share_setpoint_1 = task_share.Share ('f', thread_protect = False, name = "share_setpoint_1")
+            share_pos_1 = task_share.Share ('f', thread_protect = False, name = "share_pos_1")
+            queue_pos_1 = task_share.Queue('f', 200, thread_protect = False, name = "queue_pos_1")
+            queue_enc1Times = task_share.Queue('f', 200, thread_protect = False, name = "queue_enc1Times")
+            
+            # Create a shares for second motor duty cycle, controller setpoint, and encoder position
+            share_duty_2 = task_share.Share ('i', thread_protect = False, name = "share_duty_2")
+            share_setpoint_2 = task_share.Share ('f', thread_protect = False, name = "share_setpoint_2")
+            share_pos_2 = task_share.Share ('f', thread_protect = False, name = "share_pos_2")
+            queue_pos_2 = task_share.Queue('f', 200, thread_protect = False, name = "queue_pos_2")
+            
+            Contperiod = int(input("Set Controller Period: "))
+            
+            
+            # Initialize shared variables
+            share_duty_1.put(0)
+            share_setpoint_1.put(math.pi*2)
+            share_pos_1.put(0)
+            share_duty_2.put(0)
+            share_setpoint_2.put(math.pi*2)
+            share_pos_2.put(0)
+            
 
-    # Empty the comm port buffer of the character(s) just pressed
-#     if vcp.any():
-#         vcp.read ()
-    
-    share_duty_1.put(0)
-    task1_Mot.schedule()
-    share_duty_1.put(0)
-    task4_Mot2.schedule()
-    
-# 
-#     # Print a table of task data and a table of shared information data
-#     print ('\n' + str (cotask.task_list))
-#     print ('\r\n')
-    
-    trace = task2_Enco.get_trace()
-    timeList = trace.split("\n")
-    times = []
-    
-    for item in timeList:
-        times.append(item.strip().split(":")[0])
-    
-    # Get that boi outta here
-    times.pop(0)
-    queue_pos_1.get()
-    
-    timeCounter = 0
-    
-    while not queue_pos_1.empty():
-        print(times[timeCounter], queue_pos_1.get())
-        timeCounter += 1
+            # Create the tasks. If trace is enabled for any task, memory will be
+            # allocated for state transition tracing, and the application will run out
+            # of memory after a while and quit. Therefore, use tracing only for 
+            # debugging and set trace to False when it's not needed
+            
+            if (runs > 1):
+                task1_Mot.deinit()
+                task2_Enco.deinit()
+                task3_Cont.deinit()
+            
+            # First set of tasks
+            task1_Mot = cotask.Task (task1_Motor, name = 'Task1_Motor', priority = 1, 
+                                 period = 10, profile = True, trace = False)
+            task2_Enco = cotask.Task (task2_Encoder, name = 'Task2_Encoder', priority = 3, 
+                                 period = 10, profile = True, trace = False)
+            task3_Cont = cotask.Task (task3_Controller, name = 'Task3_Controller', priority = 2, 
+                                 period = Contperiod, profile = True, trace = False)
+            
+            # Second set of tasks
+            task4_Mot2 = cotask.Task (task4_Motor2, name = 'Task4_Motor2', priority = 1, 
+                                 period = 10, profile = True, trace = False)
+            task5_Enco2 = cotask.Task (task5_Encoder2, name = 'Task5_Encoder2', priority = 3, 
+                                 period = 10, profile = True, trace = False)
+            task6_Cont2 = cotask.Task (task6_Controller2, name = 'Task6_Controller2', priority = 2, 
+                                 period = Contperiod, profile = True, trace = False)
+            
+            # Reinitialize tasks
+            task1_Mot.reset_profile()
+            task2_Enco.reset_profile()
+            task3_Cont.reset_profile()
+            task4_Mot2.reset_profile()
+            task5_Enco2.reset_profile()
+            task6_Cont2.reset_profile()
+            
+            cotask.task_list.append (task1_Mot)
+            cotask.task_list.append (task2_Enco)
+            cotask.task_list.append (task3_Cont)
+            #cotask.task_list.append (task4_Mot2)
+            #cotask.task_list.append (task5_Enco2)
+            #cotask.task_list.append (task6_Cont2)
+            
+
+            # Run the memory garbage collector to ensure memory is as defragmented as
+            # possible before the real-time scheduler is started
+            gc.collect ()
+
+            # Start a timer to time step response
+            start = utime.ticks_ms()
+            
+            # Run the scheduler with the chosen scheduling algorithm. Quit if any 
+            # character is received through the serial port
+            while True:
+                if utime.ticks_diff(utime.ticks_ms(), start) >= 2000:
+                    break
+                cotask.task_list.pri_sched ()
+
+            # Empty the comm port buffer of the character(s) just pressed
+        #     if vcp.any():
+        #         vcp.read ()
+            
+            share_duty_1.put(0)
+            task1_Mot.schedule()
+            #share_duty_2.put(0)
+            #task4_Mot2.schedule()
+            
+        # 
+        #     # Print a table of task data and a table of shared information data
+        #     print ('\n' + str (cotask.task_list))
+        #     print ('\r\n')
+        
+            while not queue_pos_1.empty():
+                print(queue_enc1Times.get(), queue_pos_1.get())
+            
+            runs += 1
+            
+        except KeyboardInterrupt:
+            break
